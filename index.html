@@ -5,31 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Temporizador</title>
     <style>
-
         /* Efecto de presionar */
-button {
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
+        button {
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
 
-button:active {
-    transform: scale(0.95); /* Hace que el botón se vea "presionado" */
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-}
+        button:active {
+            transform: scale(0.95); /* Hace que el botón se vea "presionado" */
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        }
 
-/* Efecto de color al hacer clic */
-@keyframes clickEffect {
-    0% { background-color: #f0f0f0; }
-    50% { background-color: #dcdcdc; }
-    100% { background-color: #f0f0f0; }
-}
+        /* Efecto de color al hacer clic */
+        @keyframes clickEffect {
+            0% { background-color: #f0f0f0; }
+            50% { background-color: #dcdcdc; }
+            100% { background-color: #f0f0f0; }
+        }
 
-.clicked {
-    animation: clickEffect 0.3s;
-}
+        .clicked {
+            animation: clickEffect 0.3s;
+        }
+
         /* 🔥 Contenedor principal */
         .timer-container {
             text-align: center;
-            max-width: 130%; /* 🔥 Ajustado según tu preferencia */
+            max-width: 130%;
             margin: auto;
             padding: 10px;
         }
@@ -128,7 +128,7 @@ button:active {
 
     <script>
         let timer;
-        let timeLeft;
+        let timeLeft = localStorage.getItem("timeLeft") ? parseInt(localStorage.getItem("timeLeft")) : 25 * 60;
         let isRunning = false;
         let audio = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
 
@@ -140,18 +140,18 @@ button:active {
         }
 
         // Función para agregar efecto de clic
-function addClickEffect(event) {
-    let button = event.target;
-    button.classList.add("clicked");
-    setTimeout(() => {
-        button.classList.remove("clicked");
-    }, 300); // Quita la animación después de 0.3s
-}
+        function addClickEffect(event) {
+            let button = event.target;
+            button.classList.add("clicked");
+            setTimeout(() => {
+                button.classList.remove("clicked");
+            }, 300); 
+        }
 
-// Agregar evento a los botones
-document.getElementById("startBtn").addEventListener("click", addClickEffect);
-document.getElementById("pauseBtn").addEventListener("click", addClickEffect);
-document.getElementById("resetBtn").addEventListener("click", addClickEffect);
+        // Agregar evento a los botones
+        document.getElementById("startBtn").addEventListener("click", addClickEffect);
+        document.getElementById("pauseBtn").addEventListener("click", addClickEffect);
+        document.getElementById("resetBtn").addEventListener("click", addClickEffect);
 
         function startTimer() {
             if (!isRunning) {
@@ -159,10 +159,12 @@ document.getElementById("resetBtn").addEventListener("click", addClickEffect);
                 timer = setInterval(() => {
                     if (timeLeft > 0) {
                         timeLeft--;
+                        localStorage.setItem("timeLeft", timeLeft); // Guarda el tiempo restante
                         updateDisplay();
                     } else {
                         clearInterval(timer);
                         isRunning = false;
+                        localStorage.removeItem("timeLeft"); 
                         playAlarm();
                     }
                 }, 1000);
@@ -179,6 +181,7 @@ document.getElementById("resetBtn").addEventListener("click", addClickEffect);
             isRunning = false;
             let userInput = parseInt(document.getElementById("timeInput").value);
             timeLeft = userInput * 60;
+            localStorage.setItem("timeLeft", timeLeft);
             updateDisplay();
         }
 
@@ -189,10 +192,11 @@ document.getElementById("resetBtn").addEventListener("click", addClickEffect);
             });
         }
 
-        // 🚀 NUEVO: Se actualiza automáticamente al cambiar el input
+        // 🚀 Se actualiza automáticamente al cambiar el input
         document.getElementById("timeInput").addEventListener("input", function() {
             if (!isRunning) { 
                 timeLeft = parseInt(this.value) * 60;
+                localStorage.setItem("timeLeft", timeLeft);
                 updateDisplay();
             }
         });
@@ -201,17 +205,25 @@ document.getElementById("resetBtn").addEventListener("click", addClickEffect);
         document.getElementById("pauseBtn").addEventListener("click", pauseTimer);
         document.getElementById("resetBtn").addEventListener("click", resetTimer);
 
-        // 🔥 Botón oculto para desbloquear sonido en caso de bloqueo del navegador
+        // 🔥 Restaurar tiempo cuando la página vuelva a ser visible
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible" && isRunning) {
+                startTimer();
+            }
+        });
+
+        // 🔥 Botón para desbloquear sonido
         document.getElementById("unmuteBtn").addEventListener("click", function() {
             audio.play().then(() => {
-                document.getElementById("unmuteBtn").style.display = "none"; // Ocultar botón después de desbloquear
+                document.getElementById("unmuteBtn").style.display = "none";
             }).catch(() => {
                 alert("Presiona este botón para habilitar el sonido.");
             });
         });
 
-        resetTimer(); // Inicializa con el tiempo ingresado por el usuario
+        updateDisplay();
     </script>
 
 </body>
 </html>
+
